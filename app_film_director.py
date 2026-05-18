@@ -459,12 +459,15 @@ if generate_clicked:
             video = operation.result.generated_videos[0]
             raw_bytes = video.video.video_bytes
             if not raw_bytes and video.video.uri:
-                import urllib.request
+                import re, urllib.request
                 uri = video.video.uri
-                if not uri.startswith("http"):
-                    uri = f"https://generativelanguage.googleapis.com/download/v1beta/{uri.lstrip('/')}?key={api_key}"
-                with urllib.request.urlopen(uri) as r:
-                    raw_bytes = r.read()
+                st.info(f"DEBUG URI: `{uri}`")
+                m = re.search(r"files/([^/?]+)", uri)
+                if m:
+                    file_id = m.group(1)
+                    download_url = f"https://generativelanguage.googleapis.com/download/v1beta/files/{file_id}?alt=media&key={api_key}"
+                    with urllib.request.urlopen(download_url) as r:
+                        raw_bytes = r.read()
             st.session_state.video_bytes = raw_bytes
             st.session_state.last_video_meta = {
                 "model": model_id,
