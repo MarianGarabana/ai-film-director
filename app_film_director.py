@@ -131,16 +131,25 @@ with st.sidebar:
         help="Used by Gemini for prompt engineering."
     )
     project_id = st.text_input(
-        "GCP Project ID", value="genai-marian",
-        help="Used by Veo 3 (Vertex AI)."
+        "GCP Project ID (optional)",
+        value="",
+        placeholder="genai-marian",
+        help="Fill to use Vertex AI ADC. Leave empty to use your API key for Veo instead.",
     )
 
-    st.warning(
-        "**Veo 3 requires Vertex AI ADC.**\n\n"
-        "Run once in your terminal:\n\n"
-        "```\ngcloud auth application-default login\n```",
-        icon=":material/warning:",
-    )
+    if project_id.strip():
+        st.warning(
+            "**Using Vertex AI ADC.**\n\n"
+            "Make sure you've run:\n\n"
+            "```\ngcloud auth application-default login\n```",
+            icon=":material/warning:",
+        )
+    else:
+        st.info(
+            "**API key mode.** Veo will use your Google API Key. "
+            "Ensure your key has Veo access enabled.",
+            icon=":material/key:",
+        )
 
     st.caption("GENERATION")
     use_fast_model = st.toggle("Veo 3 Fast (lower latency)", value=True)
@@ -384,18 +393,18 @@ generate_clicked = st.button(
 )
 
 if generate_clicked:
-    if not project_id:
-        st.error("Enter your GCP Project ID in the sidebar (needed for Veo 3 / Vertex AI).")
-        st.stop()
-
     status_box = st.empty()
     status_box.info(f"Submitting to **{model_id}**…", icon=":material/movie:")
 
     try:
-        # Veo 3 runs on us-central1, not global
-        veo_client = genai.Client(
-            vertexai=True, project=project_id, location="us-central1"
-        )
+        if project_id.strip():
+            # Vertex AI ADC mode
+            veo_client = genai.Client(
+                vertexai=True, project=project_id.strip(), location="us-central1"
+            )
+        else:
+            # API key mode
+            veo_client = genai.Client(api_key=api_key)
 
         operation = veo_client.models.generate_videos(
             model=model_id,
