@@ -461,7 +461,6 @@ if generate_clicked:
             if not raw_bytes and video.video.uri:
                 import re, urllib.request
                 uri = video.video.uri
-                st.info(f"DEBUG URI: `{uri}`")
                 m = re.search(r"files/([^/?]+)", uri)
                 if m:
                     file_id = m.group(1)

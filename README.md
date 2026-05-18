@@ -1,18 +1,113 @@
 # 🎬 AI Film Director
 
-A Streamlit app that turns cinematic parameters into fully-produced AI-generated videos — with dialogue, sound design, and a custom score. Built as a university GenAI course project.
+A Streamlit app that turns cinematic parameters into AI-generated videos. Built as a university GenAI course project.
 
 ---
 
-## What it does
+## Two modes — pick what you have
 
-The app works in two stages:
+| | Easy mode | Full mode |
+|---|---|---|
+| **What you need** | Google API key only | Google API key + GCP project |
+| **Video model** | Veo 2 | Veo 3.1 |
+| **Audio & dialogue** | ❌ | ✅ |
+| **Setup time** | ~5 minutes | ~20 minutes |
+| **Cost** | Free tier available | GCP billing required |
 
-**Stage 1 — Prompt Engineering with Gemini 2.5 Flash**  
-You fill in cinematic parameters: subject, action, scene/setting, camera angle, camera movement, visual style, lens effect, and optional dialogue. Gemini 2.5 Flash synthesises all of them into a single coherent, production-ready Veo prompt — ensuring every keyword is used without adding concepts you didn't ask for.
+Start with Easy mode if you're new. Upgrade to Full mode when you want Veo 3 + audio.
 
-**Stage 2 — Video Generation with Veo 3**  
-The engineered prompt is sent to Google's Veo 3 model on Vertex AI. The app polls asynchronously and shows a live progress bar while the model renders. When done, the video plays back in a built-in screening room with metadata chips (model, resolution, duration, audio). You can download the `.mp4` or save it directly to Google Cloud Storage.
+---
+
+## How it works
+
+**Stage 1 — Prompt engineering (Gemini 2.5 Flash)**
+Fill in the cinematic form: subject, action, scene, camera angle, movement, visual style, lens effect, optional dialogue. Gemini synthesises all of them into a single production-ready Veo prompt — every keyword included, no invented concepts.
+
+**Stage 2 — Video generation**
+- *Easy mode*: sends the prompt to Veo 2 via Google AI API (your key, your quota)
+- *Full mode*: sends to Veo 3.1 on Vertex AI (your GCP project, your billing)
+
+The app polls every 15 seconds and shows a live progress bar. When done, the video plays inline in a screening room with metadata chips. Download as `.mp4` or save to GCS.
+
+---
+
+## Setup — Easy mode (beginners, start here)
+
+### Step 1 — Create a Google account
+If you don't have one: [accounts.google.com/signup](https://accounts.google.com/signup). Free, takes 2 minutes.
+
+### Step 2 — Get a Google AI Studio API key
+1. Go to [aistudio.google.com](https://aistudio.google.com)
+2. Sign in with your Google account
+3. Click **Get API key** → **Create API key**
+4. Copy the key (starts with `AIza...`) — save it somewhere safe
+
+### Step 3 — Install Python
+If you don't have Python: download it at [python.org/downloads](https://www.python.org/downloads). Install version **3.10 or newer**.
+
+To check if Python is already installed, open a terminal and run:
+```bash
+python --version
+```
+
+### Step 4 — Download and run the app
+
+```bash
+# Clone the repo
+git clone https://github.com/MarianGarabana/ai-film-director.git
+cd ai-film-director
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the app
+streamlit run app_film_director.py
+```
+
+Your browser will open automatically at `http://localhost:8501`.
+
+### Step 5 — Use the app
+1. Paste your API key in the sidebar under **Google API Key**
+2. Leave **GCP Project ID** empty
+3. Fill in the scene parameters (or click a preset)
+4. Click **Generate cinematic prompt**, then **Generate video**
+5. Wait ~2 minutes — Veo 2 is rendering your scene
+
+---
+
+## Setup — Full mode (Veo 3 + audio)
+
+Requires a Google Cloud account with billing enabled and Veo 3 access approved.
+
+### Step 1 — Complete Easy mode setup first
+
+### Step 2 — Create a Google Cloud account
+1. Go to [cloud.google.com](https://cloud.google.com) → **Get started for free**
+2. A credit card is required for verification (free tier gives $300 in credits)
+
+### Step 3 — Create a GCP project
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+2. Click the project dropdown at the top → **New Project**
+3. Name it (e.g. `my-veo-project`) → **Create**
+4. Note your **Project ID** (shown under the project name)
+
+### Step 4 — Enable Vertex AI API
+1. In GCP Console, go to **APIs & Services → Library**
+2. Search `Vertex AI API` → click it → **Enable**
+
+### Step 5 — Request Veo 3 access
+Veo 3 requires allowlisting. Fill out the request form in the [Vertex AI console](https://console.cloud.google.com/vertex-ai). Google typically approves within a few days.
+
+### Step 6 — Install and authenticate gcloud CLI
+1. Download at [cloud.google.com/sdk/docs/install](https://cloud.google.com/sdk/docs/install)
+2. Run:
+```bash
+gcloud auth application-default login
+```
+This opens a browser — sign in with the Google account that owns your GCP project.
+
+### Step 7 — Use the app
+Same as Easy mode, but enter your **Project ID** in the sidebar. The app automatically switches to Veo 3 + audio.
 
 ---
 
@@ -23,34 +118,49 @@ The engineered prompt is sent to Google's Veo 3 model on Vertex AI. The app poll
 | **Cinematic parameter form** | Subject, action, scene, camera angle, movement, visual style, lens effect, dialogue |
 | **Style presets** | One-click presets: Noir Thriller, Sci-Fi Epic, Documentary |
 | **Prompt editor** | Gemini output is fully editable before sending to Veo |
-| **Prompt history** | Last 5 engineered prompts saved in session, restorable with one click |
-| **Live progress bar** | Animated gradient bar with elapsed time during Veo polling |
+| **Prompt history** | Last 5 engineered prompts saved per session, restorable with one click |
+| **Live progress bar** | Animated gradient bar with elapsed time during generation |
 | **Screening room** | Inline video player with model metadata chips |
-| **GCS export** | Save generated video to a Google Cloud Storage bucket |
-| **Cinematic dark UI** | Custom theme: charcoal background, IMDb-gold accents, Inter + JetBrains Mono fonts |
+| **GCS export** | Save generated video to Google Cloud Storage (Full mode) |
+| **Cinematic dark UI** | Charcoal background, IMDb-gold accents, Inter + JetBrains Mono fonts |
 
 ---
 
 ## What I learned in class and applied here
 
 ### 1. Multi-model pipelines
-Using two models in sequence — a language model (Gemini 2.5 Flash) to preprocess and structure the input, and a generative video model (Veo 3) to produce the final output. This is a core pattern in production GenAI systems.
+Two models in sequence: Gemini 2.5 Flash preprocesses and structures the input; Veo generates the final video. Core pattern in production GenAI systems.
 
 ### 2. Prompt engineering
-Constructing system prompts that constrain model output precisely: forcing inclusion of all input keywords, forbidding hallucinated concepts, and specifying output format. The meta-prompt sent to Gemini is itself an exercise in prompt engineering.
+Constructing system prompts that constrain output precisely — forcing inclusion of all keywords, forbidding hallucinated concepts, enforcing output format. The meta-prompt sent to Gemini is itself an exercise in prompt engineering.
 
 ### 3. Two authentication modes in the Google GenAI ecosystem
-- **API key** (`google-genai` client) — used for Gemini (available via Google AI Studio)
-- **Application Default Credentials (ADC)** — used for Veo 3 on Vertex AI, which requires a GCP project and `gcloud auth application-default login`
+- **API key** — used for Gemini and Veo 2 via Google AI Studio (simple, no GCP needed)
+- **Application Default Credentials (ADC)** — used for Veo 3 on Vertex AI (requires a GCP project and `gcloud auth application-default login`)
 
 ### 4. Asynchronous long-running operations
-Veo 3 generation takes 1–4 minutes. The API returns an `Operation` object immediately; the app polls `veo_client.operations.get(operation)` every 15 seconds until `operation.done` is `True`. This is the standard pattern for long-running AI workloads on GCP.
+Video generation takes 1–4 minutes. The API returns an `Operation` object immediately; the app polls `veo_client.operations.get(operation)` every 15 seconds until `operation.done` is `True`. Standard pattern for long-running AI workloads on GCP.
 
 ### 5. Cloud storage integration
-Writing generated binary data (video bytes) directly to Google Cloud Storage using `google-cloud-storage`, constructing timestamped paths, and returning `gs://` URIs.
+Writing generated binary data directly to Google Cloud Storage using `google-cloud-storage`, constructing timestamped paths, returning `gs://` URIs.
 
 ### 6. Streamlit for rapid GenAI prototyping
-Building an interactive, stateful multi-step UI with `st.session_state`, `st.empty()` placeholders for dynamic updates, conditional rendering, and a custom theme via `.streamlit/config.toml` — all without a backend server.
+Stateful multi-step UI with `st.session_state`, `st.empty()` for dynamic updates, conditional rendering, custom theme via `.streamlit/config.toml` — no backend server.
+
+---
+
+## Sidebar controls
+
+| Control | Effect |
+|---|---|
+| Google API Key | Required for Gemini (both modes) and Veo 2 (Easy mode) |
+| GCP Project ID | Optional — leave empty for Easy mode, fill for Full mode (Veo 3) |
+| Veo 3 Fast toggle | Full mode only — `veo-3.1-fast-generate-001` (~1–2 min) vs `veo-3.1-generate-001` (~2–4 min) |
+| Duration | 4, 6, or 8 seconds |
+| Aspect ratio | 16:9 (landscape) or 9:16 (vertical/mobile) |
+| Resolution | 720p or 1080p |
+| Auto-enhance prompt | Lets Veo's built-in enhancer refine the prompt further |
+| Generate audio | Full mode only — enables Veo 3's native audio and dialogue |
 
 ---
 
@@ -59,57 +169,10 @@ Building an interactive, stateful multi-step UI with `st.session_state`, `st.emp
 | Layer | Technology |
 |---|---|
 | UI | [Streamlit](https://streamlit.io) |
-| Prompt engineering | Gemini 2.5 Flash (`gemini-2.5-flash`) via `google-genai` SDK |
-| Video generation | Veo 3 (`veo-3.1-fast-generate-001` / `veo-3.1-generate-001`) via Vertex AI |
+| Prompt engineering | Gemini 2.5 Flash via `google-genai` SDK |
+| Video (Easy mode) | Veo 2 (`veo-2.0-generate-001`) via Google AI API key |
+| Video (Full mode) | Veo 3.1 (`veo-3.1-fast-generate-001`) via Vertex AI |
 | Cloud storage | Google Cloud Storage (`google-cloud-storage`) |
-| Auth (Gemini) | Google API key |
-| Auth (Veo 3) | Application Default Credentials (ADC) |
-
----
-
-## Prerequisites
-
-- Python 3.10+
-- A **Google API key** with access to Gemini 2.5 Flash ([get one at Google AI Studio](https://aistudio.google.com))
-- A **GCP project** with Vertex AI API enabled and Veo 3 access
-- `gcloud` CLI installed and authenticated:
-
-```bash
-gcloud auth application-default login
-```
-
----
-
-## Installation
-
-```bash
-git clone https://github.com/MarianGarabana/ai-film-director.git
-cd ai-film-director
-pip install -r requirements.txt
-streamlit run app_film_director.py
-```
-
----
-
-## Usage
-
-1. Enter your **Google API Key** and **GCP Project ID** in the sidebar
-2. (Optional) Click a **style preset** to auto-fill the form, or fill in your own parameters
-3. Click **Generate cinematic prompt** — Gemini engineers the Veo prompt from your inputs
-4. Review and optionally edit the prompt in the text area
-5. Click **Generate video** — Veo 3 renders the scene (1–4 min)
-6. Watch the result in the **Screening room**, then download or save to GCS
-
-### Sidebar controls
-
-| Control | Effect |
-|---|---|
-| Veo 3 Fast toggle | Switches between `veo-3.1-fast-generate-001` (~1–2 min) and `veo-3.1-generate-001` (~2–4 min) |
-| Duration | 4, 6, or 8 seconds |
-| Aspect ratio | 16:9 (landscape) or 9:16 (vertical/mobile) |
-| Resolution | 720p or 1080p |
-| Auto-enhance prompt | Lets Veo's built-in enhancer further refine the prompt |
-| Generate audio | Enables Veo 3's native audio and dialogue generation |
 
 ---
 
@@ -126,11 +189,19 @@ ai-film-director/
 
 ---
 
-## Notes
+## Troubleshooting
 
-- Veo 3 access requires allowlisting on your GCP project. Request access via the [Vertex AI console](https://console.cloud.google.com/vertex-ai).
-- Generated videos are held in memory (`st.session_state`) for the duration of the browser session. Use the download or GCS save buttons to persist them.
-- The GCS save button uses the same project ID entered for Veo. The bucket must already exist and your ADC credentials must have write access.
+**`403 PERMISSION_DENIED` on Veo 3**
+Your service account or ADC credentials lack the Vertex AI User role. Go to GCP IAM → grant `roles/aiplatform.user` to your principal.
+
+**`404 NOT_FOUND` for Veo model**
+Veo 3 is not accessible via API key — enter a GCP Project ID in the sidebar to switch to Vertex AI mode.
+
+**`generate_audio` parameter error**
+Audio is only supported in Full mode (Vertex AI). Leave GCP Project ID empty to use Easy mode, or fill it in to enable audio.
+
+**App won't start**
+Make sure Python 3.10+ is installed and all dependencies are installed: `pip install -r requirements.txt`
 
 ---
 
