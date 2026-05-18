@@ -2,8 +2,6 @@
 
 A Streamlit app that turns cinematic parameters into fully-produced AI-generated videos — with dialogue, sound design, and a custom score. Built as a university GenAI course project.
 
-![AI Film Director — dark cinematic UI](https://placehold.co/1200x600/0f0f0f/f5c518?text=AI+Film+Director)
-
 ---
 
 ## What it does
