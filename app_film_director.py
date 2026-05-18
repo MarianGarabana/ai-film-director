@@ -5,7 +5,12 @@ from google import genai
 from google.genai import types
 from google.cloud import storage
 
-
+import json, os
+if "gcp" in st.secrets:
+    info = json.loads(st.secrets["gcp"]["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+    with open("/tmp/gcp_key.json", "w") as f:
+        json.dump(info, f)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/tmp/gcp_key.json"
 def save_video_to_gcs(bucket_name, data):
     try:
         client = storage.Client(project=bucket_name)
