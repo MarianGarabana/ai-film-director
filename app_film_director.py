@@ -376,13 +376,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-model_id = "veo-3.1-fast-generate-001" if use_fast_model else "veo-3.1-generate-001"
-expected_seconds = 90 if use_fast_model else 210
+if project_id.strip():
+    model_id = "veo-3.1-fast-generate-001" if use_fast_model else "veo-3.1-generate-001"
+    expected_seconds = 90 if use_fast_model else 210
+else:
+    model_id = "veo-2.0-generate-001"
+    expected_seconds = 120
 
 st.badge(
     model_id,
     icon=":material/bolt:" if use_fast_model else ":material/hd:",
-    color="orange" if use_fast_model else "blue",
+    color="orange" if project_id.strip() and use_fast_model else "blue",
 )
 
 generate_clicked = st.button(
@@ -406,16 +410,22 @@ if generate_clicked:
             # API key mode
             veo_client = genai.Client(api_key=api_key)
 
-        video_config = types.GenerateVideosConfig(
-            aspect_ratio=aspect_ratio,
-            number_of_videos=1,
-            duration_seconds=duration,
-            resolution=resolution,
-            person_generation="allow_adult",
-            enhance_prompt=enhance_prompt,
-        )
         if project_id.strip():
-            video_config.generate_audio = generate_audio
+            video_config = types.GenerateVideosConfig(
+                aspect_ratio=aspect_ratio,
+                number_of_videos=1,
+                duration_seconds=duration,
+                resolution=resolution,
+                person_generation="allow_adult",
+                enhance_prompt=enhance_prompt,
+                generate_audio=generate_audio,
+            )
+        else:
+            video_config = types.GenerateVideosConfig(
+                aspect_ratio=aspect_ratio,
+                number_of_videos=1,
+                duration_seconds=duration,
+            )
 
         operation = veo_client.models.generate_videos(
             model=model_id,
