@@ -406,18 +406,21 @@ if generate_clicked:
             # API key mode
             veo_client = genai.Client(api_key=api_key)
 
+        video_config = types.GenerateVideosConfig(
+            aspect_ratio=aspect_ratio,
+            number_of_videos=1,
+            duration_seconds=duration,
+            resolution=resolution,
+            person_generation="allow_adult",
+            enhance_prompt=enhance_prompt,
+        )
+        if project_id.strip():
+            video_config.generate_audio = generate_audio
+
         operation = veo_client.models.generate_videos(
             model=model_id,
             prompt=st.session_state.engineered_prompt,
-            config=types.GenerateVideosConfig(
-                aspect_ratio=aspect_ratio,
-                number_of_videos=1,
-                duration_seconds=duration,
-                resolution=resolution,
-                person_generation="allow_adult",
-                enhance_prompt=enhance_prompt,
-                generate_audio=generate_audio,
-            ),
+            config=video_config,
         )
 
         # Poll until done
